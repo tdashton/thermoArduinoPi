@@ -46,6 +46,11 @@ void loop() {
     Serial.print("connecting to ");
     Serial.println(host);
 
+    String name;
+    int temperature;
+    // get_temp_payload(&name, &temperature);
+    // Serial.println("3|SENSOR|" + name + "|" + temperature);
+
     String connectPort = connect_get_port();
     if(connectPort.length() == 0) {
         Serial.println("get port failed");
@@ -62,8 +67,9 @@ void loop() {
         return; // restarts the loop
     }
     for(;;) {
-        client.println(get_temp_payload("kitchen", get_temp()));
-        delay(5000);
+        get_temp_payload(&name, &temperature);
+        client.println("3|SENSOR|" + name + "|" + temperature);
+        delay(1000 * 5);
     }
 }
 
