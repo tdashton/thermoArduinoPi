@@ -15,8 +15,6 @@
 
 OneWire  ds(14);  // on pin 10 (a 4.7K resistor is necessary)
 
-const unsigned int MAX_INPUT = 20;
-
 WiFiClient client;
 
 void setup() {
@@ -48,8 +46,6 @@ void loop() {
 
     String name;
     int temperature;
-    // get_temp_payload(&name, &temperature);
-    // Serial.println("3|SENSOR|" + name + "|" + temperature);
 
     String connectPort = connect_get_port();
     if(connectPort.length() == 0) {
@@ -57,26 +53,30 @@ void loop() {
         delay(5000);
         return; // restarts the loop
     }
-    Serial.println("should re-connect to:" + connectPort);
+    Serial.println("should connect to worker:" + connectPort);
     int intport = connectPort.toInt();
     Serial.println(intport);
+    delay(1000);
     // Use WiFiClient class to create TCP connections
     if (!client.connect(host, intport)) {
-        Serial.println("connection failed");
+        Serial.println("worker connection failed");
         delay(5000);
         return; // restarts the loop
     }
+    client.println("LOG");
     for(;;) {
         get_temp_payload(&name, &temperature);
-        client.println("3|SENSOR|" + name + "|" + temperature);
-        delay(1000 * 5);
+        client.print("3|SENSOR|" + name + "|" + temperature + (char)10);
+        Serial.print("3|SENSOR|" + name + "|" + temperature + (char)10);
+        client.flush();
+        delay(1000 * 58);
     }
 }
 
 String connect_get_port() {
     // Use WiFiClient class to create TCP connections
-    if (!client.connect(host, 2021)) {
-        Serial.println("connection failed");
+    if (!client.connect(host, port)) {
+        Serial.println("negotiate connection failed");
         return "";
     } else {
         client.println("CONNECT LOG");
@@ -84,6 +84,7 @@ String connect_get_port() {
 
     String portStr;
     bool portRead = false;
+    char newLine = 10;
     // if bytes are available we read them
     
     while(portRead == false) {
@@ -92,12 +93,13 @@ String connect_get_port() {
           Serial.println(ackLine);
           String portLine = client.readStringUntil('\n');
           Serial.println(portLine);
+          client.readStringUntil('\n');
           int index = portLine.indexOf(":");
           portStr = portLine.substring(index + 1);
-          Serial.println("loop-port-while" + portStr);
+          Serial.println("loop-port-while:" + portStr);
           portRead = true;
       } while (client.available());
-      Serial.println("port-loop-for" + portStr);
+      Serial.println("port-loop-for:" + portStr);
       delay(1000);
     }
 
@@ -196,6 +198,9 @@ void get_temp_payload(String *name, int *temperature) {
         else if (cfg == 0x40) raw = raw & ~1; // 11 bit res, 375 ms
         //// default is 12 bit resolution, 750 ms conversion time
     }
+
+    ds.reset_search();
+
     celsius = (float)raw / 16.0;
     fahrenheit = celsius * 1.8 + 32.0;
     Serial.print("  Temperature = ");
@@ -204,6 +209,6 @@ void get_temp_payload(String *name, int *temperature) {
     Serial.print(fahrenheit);
     Serial.println(" Fahrenheit");
     *temperature = (int)(celsius * 1000);
-    *name = String("name");
+    *name = String("10-078B5DE28072");
     return;
 }
