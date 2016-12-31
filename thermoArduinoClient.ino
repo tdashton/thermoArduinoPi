@@ -35,26 +35,27 @@ void setup() {
 void loop() {
     Serial.print("connecting to ");
     Serial.println(host);
-    String portStr;
 
     // Use WiFiClient class to create TCP connections
     if (!client.connect(host, 2021)) {
         Serial.println("connection failed");
         delay(5000);
-
-        String test = "NEGOTIATE:2021";
-        int index = test.indexOf(":");
-        Serial.println("portLine.substring(index + 1)");
-        Serial.println(test.substring(index + 1));
-        portStr = test.substring(index + 1);
-        Serial.println("portStr");
-        Serial.println(portStr);
-        
         return; // restarts the loop
     } else {      
         client.println("CONNECT LOG");
     }
 
+    String connectPort = connect_get_port();
+    Serial.println("out" + connectPort);
+    int intport = connectPort.toInt();
+    Serial.println(intport);
+
+    delay(5000);
+
+}
+
+String connect_get_port() {
+    String portStr;
     bool portRead = false;
     // if bytes are available we read them
     
@@ -75,35 +76,9 @@ void loop() {
     }
     
     Serial.println("port-loop" + portStr);
-
-    Serial.println("disconnecting.");
-    client.stop();
-
-    Serial.println("out" + portStr);
-    int intport = portStr.toInt();
-    Serial.println(intport);
-
     Serial.println("closing connection");
     client.stop();
-
-    delay(5000);
-
-//    // We now create a URI for the request
-//    String url = "/testwifi/index.html";
-//    Serial.print("Requesting URL: ");
-//    Serial.println(url);
-//    // This will send the request to the server
-//    client.print(String("GET ") + url + " HTTP/1.1\r\n" +
-//    "Host: " + host + "\r\n" +
-//    "Connection: close\r\n\r\n");
-//    delay(500);
-//    // Read all the lines of the reply from server and print them to Serial
-//    while(client.available()){
-//        String line = client.readStringUntil('\r');
-//        Serial.print(line);
-//    }
-//    Serial.println();
-//    Serial.println("closing connection");
+    return portStr;
 }
 
 String get_temp_payload() {
