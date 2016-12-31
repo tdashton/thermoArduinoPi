@@ -101,7 +101,7 @@ String connect_get_port() {
     return portStr;
 }
 
-int get_temp(void) {
+void get_temp_payload(String *name, int *temperature) {
     byte i;
     byte present = 0;
     byte type_s;
@@ -114,7 +114,7 @@ int get_temp(void) {
         Serial.println();
         ds.reset_search();
         delay(250);
-        return -1;
+        return;
     }
 
     Serial.print("ROM =");
@@ -125,7 +125,7 @@ int get_temp(void) {
 
     if (OneWire::crc8(addr, 7) != addr[7]) {
         Serial.println("CRC is not valid!");
-        return -1;
+        return;
     }
     Serial.println();
 
@@ -145,7 +145,7 @@ int get_temp(void) {
             break;
         default:
             Serial.println("Device is not a DS18x20 family device.");
-            return -1;
+            return;
     }
 
     ds.reset();
@@ -197,9 +197,7 @@ int get_temp(void) {
     Serial.print(" Celsius, ");
     Serial.print(fahrenheit);
     Serial.println(" Fahrenheit");
-    return (int)(celsius * 1000);
-}
-
-String get_temp_payload(String name, int temperature) {
-    return "2|SENSOR|2016-10-07 19:00:40.835130|" + name + "|" + temperature;
+    *temperature = (int)(celsius * 1000);
+    *name = String("name");
+    return;
 }
