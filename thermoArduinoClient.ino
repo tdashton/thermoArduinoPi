@@ -36,25 +36,36 @@ void loop() {
     Serial.print("connecting to ");
     Serial.println(host);
 
+    String connectPort = connect_get_port();
+    if(connectPort.length() == 0) {
+        Serial.println("get port failed");
+        delay(5000);
+        return; // restarts the loop
+    }
+    Serial.println("should re-connect to:" + connectPort);
+    int intport = connectPort.toInt();
+    Serial.println(intport);
     // Use WiFiClient class to create TCP connections
-    if (!client.connect(host, 2021)) {
+    if (!client.connect(host, intport)) {
         Serial.println("connection failed");
         delay(5000);
         return; // restarts the loop
-    } else {      
-        client.println("CONNECT LOG");
     }
-
-    String connectPort = connect_get_port();
-    Serial.println("out" + connectPort);
-    int intport = connectPort.toInt();
-    Serial.println(intport);
-
-    delay(5000);
-
+    for(;;) {
+        client.println(get_temp_payload());
+        delay(5000);
+    }
 }
 
 String connect_get_port() {
+    // Use WiFiClient class to create TCP connections
+    if (!client.connect(host, 2021)) {
+        Serial.println("connection failed");
+        return "";
+    } else {
+        client.println("CONNECT LOG");
+    }
+
     String portStr;
     bool portRead = false;
     // if bytes are available we read them
@@ -66,7 +77,6 @@ String connect_get_port() {
           String portLine = client.readStringUntil('\n');
           Serial.println(portLine);
           int index = portLine.indexOf(":");
-    //      Serial.println(portLine.substring(index + 1));
           portStr = portLine.substring(index + 1);
           Serial.println("loop-port-while" + portStr);
           portRead = true;
