@@ -43,27 +43,23 @@ void setup() {
 void loop() {
     Serial.print("connecting to ");
     Serial.println(host);
+    Serial.println(port);
 
     String name;
     int temperature;
 
-    String connectPort = connect_get_port();
-    if(connectPort.length() == 0) {
-        Serial.println("get port failed");
-        delay(5000);
-        return; // restarts the loop
-    }
-    Serial.println("should connect to worker:" + connectPort);
-    int intport = connectPort.toInt();
-    Serial.println(intport);
     delay(1000);
+
     // Use WiFiClient class to create TCP connections
-    if (!client.connect(host, intport)) {
+    if (!client.connect(host, port)) {
         Serial.println("worker connection failed");
         delay(5000);
         return; // restarts the loop
     }
+
     client.println("LOG");
+    client.flush();
+    delay(1000);
     for(;;) {
         get_temp_payload(&name, &temperature);
         client.print("3|SENSOR|" + name + "|" + temperature + (char)10);
@@ -71,42 +67,6 @@ void loop() {
         client.flush();
         delay(1000 * 58);
     }
-}
-
-String connect_get_port() {
-    // Use WiFiClient class to create TCP connections
-    if (!client.connect(host, port)) {
-        Serial.println("negotiate connection failed");
-        return "";
-    } else {
-        client.println("CONNECT LOG");
-    }
-
-    String portStr;
-    bool portRead = false;
-    char newLine = 10;
-    // if bytes are available we read them
-    
-    while(portRead == false) {
-      do {
-          String ackLine = client.readStringUntil('\n');
-          Serial.println(ackLine);
-          String portLine = client.readStringUntil('\n');
-          Serial.println(portLine);
-          client.readStringUntil('\n');
-          int index = portLine.indexOf(":");
-          portStr = portLine.substring(index + 1);
-          Serial.println("loop-port-while:" + portStr);
-          portRead = true;
-      } while (client.available());
-      Serial.println("port-loop-for:" + portStr);
-      delay(1000);
-    }
-
-    Serial.println("port-loop" + portStr);
-    Serial.println("closing connection");
-    client.stop();
-    return portStr;
 }
 
 void get_temp_payload(String *name, int *temperature) {
@@ -117,7 +77,7 @@ void get_temp_payload(String *name, int *temperature) {
     byte addr[8];
     float celsius, fahrenheit;
 
-    if ( !ds.search(addr)) {
+    if (!ds.search(addr)) {
         Serial.println("No more addresses.");
         Serial.println();
         ds.reset_search();
@@ -126,7 +86,7 @@ void get_temp_payload(String *name, int *temperature) {
     }
 
     Serial.print("ROM =");
-    for( i = 0; i < 8; i++) {
+    for(i = 0; i < 8; i++) {
         Serial.write(' ');
         Serial.print(addr[i], HEX);
     }
